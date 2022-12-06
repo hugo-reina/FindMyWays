@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/btn_addP"
+        android:title="Ajouter une pièce" />
+    <item
+        android:id="@+id/btn_retour"
+        android:title="Retour" />
+</menu>
