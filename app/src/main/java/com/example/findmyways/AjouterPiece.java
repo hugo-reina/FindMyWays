@@ -17,6 +17,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -65,11 +67,10 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
      */
     LocationManager locationManager;
     private  String url = "https://api.openWeathermap.org/data/2.5/weather?lat=48.692054&lon=6.184417&appid=989e7d21ce359aaf25ac1720bd42241c";
-    /**
-     * private  String urlLL = "https://api.openWeathermap.org/data/2.5/weather?";
-     * lat=48.692054&lon=6.184417&
-     * private  String appid = "appid=989e7d21ce359aaf25ac1720bd42241c";
-     */
+
+     private  String urlLL = "https://api.openWeathermap.org/data/2.5/weather?";
+     //lat=48.692054&lon=6.184417&
+     private  String appid = "appid=989e7d21ce359aaf25ac1720bd42241c";
 
 
     private static final int PHOTO =1;
@@ -85,16 +86,18 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     private int i;
     private String str;
     private Piece piece;
-    private Bitmap Nord;
-    private Bitmap Sud;
-    private Bitmap Est;
-    private Bitmap Ouest;
+    private String Nord;
+    private String Sud;
+    private String Est;
+    private String Ouest;
     private Bundle bundle;
     private String b;
     private ExecutorService service;
     private TextView t;
     private TextView p;
-    private FileOutputStream fos;
+    private OutputStream fos;
+    private InputStream fosIn;
+    private Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +117,7 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         /**
          * Fin Initialisation
          */
+
 
         if (ContextCompat.checkSelfPermission(AjouterPiece.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(AjouterPiece.this, new String[]{
@@ -138,7 +142,10 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
             TextView v = (TextView) findViewById(R.id.lib_bat);
             v.setText(str);
         }
-        //
+
+        /** TODO ajouter une bousolle pour nord sud est ouest
+         *
+         */
 
         img.setText("Prendre une photo du mur nord");
 
@@ -168,11 +175,14 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
                             @RequiresApi(api = Build.VERSION_CODES.O)
                             @Override
                             public void run() {
-                                try {
+                                try{
                                     met  = meteo(t,p);
-                                } catch (IOException | JSONException e) {
+                                } catch (JSONException | IOException e) {
                                     e.printStackTrace();
+
+
                                 }
+
                             }
                         });
                         break;
@@ -185,16 +195,15 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         public void onClick(View v) {
             //new Piece(str,);
             try {
-                MediaStore.Images.Media.insertImage(getContentResolver(), String.valueOf(image),"nom image","description");
+                MediaStore.Images.Media.insertImage(getContentResolver(), String.valueOf(image),str+"_nord","description");
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-
             Toast.makeText(AjouterPiece.this, "Votre pièce a bien été enregister !", Toast.LENGTH_SHORT).show();
             piece = new Piece(str,Nord,Sud,Est,Ouest,met);
             intent = new Intent(AjouterPiece.this, SelectionPiece.class);
             bundle = new Bundle();
-            bundle.putString("piece", String.valueOf(piece.getMeteo()));
+            bundle.putString("piece", String.valueOf(piece.getImgNord()));
             bundle.putString("bat",b);
             intent.putExtras(bundle);
             startActivity(intent);
@@ -206,32 +215,28 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     /**
      *
      */
+
+                @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
                 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
                     super.onActivityResult(requestCode, resultCode, data);
                     if (requestCode == PHOTO && resultCode == RESULT_OK) {
                         extras = data.getExtras();
                         imageBitmap = (Bitmap) extras.get("data");
+                        Log.i("done","" + imageBitmap);
                         fos = null;
-                        try {
-                            fos = openFileOutput("image.data", MODE_PRIVATE);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                        image.setImageBitmap(imageBitmap);
                         switch (i){
                             case 1:
-                                Nord = ((BitmapDrawable)image.getDrawable()).getBitmap();
+                                Nord = savePhoto("_nord");
                                 break;
                             case 2:
-                                Sud = ((BitmapDrawable)image.getDrawable()).getBitmap();
+                                Sud = savePhoto("_sud");
                                 break;
                             case 3:
-                                Est = ((BitmapDrawable)image.getDrawable()).getBitmap();
+                                Est = savePhoto("_est");
                                 break;
                             case 4:
-                                Ouest = ((BitmapDrawable)image.getDrawable()).getBitmap();
+                                Ouest = savePhoto("_ouest");
                                 break;
                         }
                         try {
@@ -242,11 +247,8 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
                     }
                 }
 
-    @SuppressLint("SetTextI18n")
     @RequiresApi(api = Build.VERSION_CODES.O)
     private double meteo(TextView t, TextView p) throws IOException, JSONException {
-
-
         InputStream in = new java.net.URL(url).openStream();
         JSONObject res = readStream(in);
         String a = res.getString("main");
@@ -255,10 +257,15 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         int d = Integer.parseInt(c[0]);
         double e = d+ (Integer.parseInt(c[1])/100.0);
         double temp = e - 273.15;
+
         p.setText(res.getString("name"));
-        String des = res.getString("weather");
+        Log.i("done","" + temp);
+        //String des = res.getString("weather");
 
         t.setText("Température : " + Math.round(temp*100.0)/100.0  + " Humidité : " + c[9]);
+        Json j = new Json();
+        context = getApplicationContext();
+        j.generateNoteOnSD(context, "Photo", "Photo");
 
 
         runOnUiThread(new Runnable() {
@@ -296,4 +303,37 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     public void onLocationChanged(@NonNull Location location) {
         Toast.makeText(this, " La Longitude est : "+location.getLongitude() + " et la Lattitue est : " + location.getLatitude(), Toast.LENGTH_SHORT).show();
     }
+
+    @Override
+    public File getFilesDir() {
+        return super.getFilesDir();
+    }
+
+    private static File getFile(Context context, String directoryName, String fileName){
+        ContextWrapper cw = new ContextWrapper(context);
+        File directory = cw.getExternalFilesDir(directoryName);
+        return new File(directory, fileName);
+    }
+
+    private String savePhoto(String or){
+                    String name = str + or;
+        try {
+            fos = openFileOutput(name, MODE_PRIVATE);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            Log.i("done","erreur");
+        }
+        imageBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        try {
+            fosIn = openFileInput(name);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        imageBitmap = BitmapFactory.decodeStream(fosIn);
+        image.setImageBitmap(Bitmap.createScaledBitmap(imageBitmap,100,100,false));
+        return name;
+    }
+
+
+
 }

@@ -39,6 +39,12 @@
                 android:id="@+id/list_piece"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
+
+            <ImageView
+                android:id="@+id/img_test"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:srcCompat="@tools:sample/avatars" />
         </FrameLayout>
 
     </LinearLayout>

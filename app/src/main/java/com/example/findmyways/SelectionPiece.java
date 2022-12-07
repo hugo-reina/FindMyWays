@@ -1,11 +1,16 @@
 package com.example.findmyways;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.w3c.dom.Text;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,6 +44,8 @@ public class SelectionPiece extends AppCompatActivity {
         private TextView txtNomBat;
         private TextView test;
         private String nomBat;
+        private InputStream fosIn;
+        private OutputStream fosOut;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -65,10 +75,22 @@ public class SelectionPiece extends AppCompatActivity {
 
             }
 
+            ImageView imgtest = findViewById(R.id.img_test);
             test.setText(strPiece);
             txtNomBat.setText(b);
+            String name = strPiece;
+            Bitmap bitmap;
 
-        }
+                try {
+                    fosIn = openFileInput(name);
+                    bitmap = BitmapFactory.decodeStream(fosIn);
+                    imgtest.setImageBitmap(Bitmap.createScaledBitmap(bitmap,100,100,false));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                    Log.i("done","erreur");
+                }
+
+            }
     }
 
 

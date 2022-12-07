@@ -11,27 +11,19 @@ public class Piece {
      */
 
     private String nom;
-    private Bitmap ImgNord;
-    private Bitmap ImgSud;
-    private Bitmap ImgEst;
-    private Bitmap ImgOuest;
+    private String ImgNord;
+    private String ImgSud;
+    private String ImgEst;
+    private String ImgOuest;
     private double Meteo;
 
-    public Piece(String nom, Bitmap ImgNord, Bitmap ImgSud, Bitmap ImgEst, Bitmap ImgOuest, double Meteo){
+    public Piece(String nom, String ImgNord, String ImgSud, String ImgEst, String ImgOuest, double Meteo){
         this.nom = nom;
         this.ImgNord = ImgNord;
         this.ImgSud = ImgSud;
         this.ImgEst = ImgEst;
         this.ImgOuest = ImgOuest;
         this.Meteo = Meteo;
-    }
-
-    public double getMeteo() {
-        return Meteo;
-    }
-
-    public void setMeteo(double meteo) {
-        Meteo = meteo;
     }
 
     @Override
@@ -54,35 +46,44 @@ public class Piece {
         this.nom = nom;
     }
 
-    public Bitmap getImgEst() {
+    public String getImgEst() {
         return ImgEst;
     }
 
-    public void setImgEst(Bitmap imgEst) {
+    public void setImgEst(String imgEst) {
         ImgEst = imgEst;
     }
 
-    public Bitmap getImgSud() {
+    public String getImgSud() {
         return ImgSud;
     }
 
-    public void setImgSud(Bitmap imgSud) {
+    public void setImgSud(String imgSud) {
         ImgSud = imgSud;
     }
 
-    public Bitmap getImgOuest() {
+    public String getImgOuest() {
         return ImgOuest;
     }
 
-    public void setImgOuest(Bitmap imgOuest) {
+    public void setImgOuest(String imgOuest) {
         ImgOuest = imgOuest;
     }
 
-    public Bitmap getImgNord() {
+    public String getImgNord() {
         return ImgNord;
     }
 
-    public void setImgNord(Bitmap imgNord) {
+    public void setImgNord(String imgNord) {
         ImgNord = imgNord;
     }
+
+    public double getMeteo() {
+        return Meteo;
+    }
+
+    public void setMeteo(double meteo) {
+        Meteo = meteo;
+    }
+
 }
