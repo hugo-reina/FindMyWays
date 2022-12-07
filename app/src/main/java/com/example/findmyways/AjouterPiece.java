@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -65,12 +66,11 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     /**
      * Declaration
      */
-    LocationManager locationManager;
     private  String url = "https://api.openWeathermap.org/data/2.5/weather?lat=48.692054&lon=6.184417&appid=989e7d21ce359aaf25ac1720bd42241c";
 
-     private  String urlLL = "https://api.openWeathermap.org/data/2.5/weather?";
+     //private  String urlLL = "https://api.openWeathermap.org/data/2.5/weather?";
      //lat=48.692054&lon=6.184417&
-     private  String appid = "appid=989e7d21ce359aaf25ac1720bd42241c";
+     //private  String appid = "appid=989e7d21ce359aaf25ac1720bd42241c";
 
 
     private static final int PHOTO =1;
@@ -98,6 +98,7 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     private OutputStream fos;
     private InputStream fosIn;
     private Context context;
+    private Json json;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +115,7 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         service = Executors.newSingleThreadExecutor();
         t = findViewById(R.id.txt_meteo);
         p = findViewById(R.id.txt_ville);
+
         /**
          * Fin Initialisation
          */
@@ -187,7 +189,6 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
                         });
                         break;
                 }
-
             }
         });
     ajouter.setOnClickListener(new View.OnClickListener() {
@@ -201,6 +202,8 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
             }
             Toast.makeText(AjouterPiece.this, "Votre pièce a bien été enregister !", Toast.LENGTH_SHORT).show();
             piece = new Piece(str,Nord,Sud,Est,Ouest,met);
+            json = new Json();
+            //json.saveData();
             intent = new Intent(AjouterPiece.this, SelectionPiece.class);
             bundle = new Bundle();
             bundle.putString("piece", String.valueOf(piece.getImgNord()));
@@ -263,10 +266,6 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         //String des = res.getString("weather");
 
         t.setText("Température : " + Math.round(temp*100.0)/100.0  + " Humidité : " + c[9]);
-        Json j = new Json();
-        context = getApplicationContext();
-        j.generateNoteOnSD(context, "Photo", "Photo");
-
 
         runOnUiThread(new Runnable() {
             @Override
@@ -304,17 +303,11 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         Toast.makeText(this, " La Longitude est : "+location.getLongitude() + " et la Lattitue est : " + location.getLatitude(), Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public File getFilesDir() {
-        return super.getFilesDir();
-    }
-
-    private static File getFile(Context context, String directoryName, String fileName){
-        ContextWrapper cw = new ContextWrapper(context);
-        File directory = cw.getExternalFilesDir(directoryName);
-        return new File(directory, fileName);
-    }
-
+    /**
+     * Sauvegarde les photos et l'affiche directement, renvoie le nom de la photo
+     * @param or
+     * @return
+     */
     private String savePhoto(String or){
                     String name = str + or;
         try {
@@ -333,6 +326,24 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         image.setImageBitmap(Bitmap.createScaledBitmap(imageBitmap,100,100,false));
         return name;
     }
+
+    /**
+     *
+     * @param params
+     * @param mJsonResponse
+     */
+    public void mCreateAndSaveFile(String params, String mJsonResponse) {
+        try {
+            FileWriter file = new FileWriter("/data/data/" + getApplicationContext().getPackageName() + "/" + params);
+            file.write(mJsonResponse);
+            file.flush();
+            file.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
 
 
