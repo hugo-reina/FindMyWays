@@ -25,6 +25,12 @@
         android:theme="@style/Theme.FindMyWays"
         tools:targetApi="31">
         <activity
+            android:name=".getDirection"
+            android:exported="false" />
+        <activity
+            android:name=".visualiser"
+            android:exported="false" />
+        <activity
             android:name=".SelectionPiece"
             android:exported="false" />
         <activity

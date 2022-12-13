@@ -12,6 +12,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class NouveauBatiment extends AppCompatActivity {
 
     /**
@@ -24,6 +26,7 @@ public class NouveauBatiment extends AppCompatActivity {
     private TextView txt1;
     private TextView txt2;
     private String nom;
+    private ArrayList<Piece> mesPieces;
 
     /**
      *
@@ -95,6 +98,7 @@ public class NouveauBatiment extends AppCompatActivity {
 
     void ChangementPage(Class activity, String text, String nom){
 
+        Batiment batiment = new Batiment(text,mesPieces);
         Intent intent = new Intent(NouveauBatiment.this, activity);
         Bundle bundle = new Bundle();
         bundle.putString(nom,text);

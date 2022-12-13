@@ -23,6 +23,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -33,8 +38,14 @@ import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.JsonWriter;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -44,6 +55,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -54,13 +66,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class AjouterPiece extends AppCompatActivity  implements LocationListener {
+public class AjouterPiece extends AppCompatActivity {
 
 
     /**
@@ -83,8 +98,10 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     private Bitmap imageBitmap;
     private Bundle extras;
     private double met;
+    private Batiment batiment;
     private int i;
     private String str;
+    private ArrayList<Piece> listPiece;
     private Piece piece;
     private String Nord;
     private String Sud;
@@ -96,9 +113,19 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     private TextView t;
     private TextView p;
     private OutputStream fos;
+    private OutputStream fosJson;
     private InputStream fosIn;
-    private Context context;
-    private Json json;
+    private FileOutputStream out;
+    private JsonWriter f;
+    private File file;
+    private String FILE_NAME = "piece.json";
+    private Sensor orientation;
+    private float x,y,z;
+
+    //
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +134,7 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         /**
          * Début Initialisation
          */
+
         img = (Button) findViewById(R.id.btn_photo);
         image = (ImageView) findViewById(R.id.img_piece);
         ajouter = (Button) findViewById(R.id.btn_ajouter);
@@ -115,6 +143,9 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         service = Executors.newSingleThreadExecutor();
         t = findViewById(R.id.txt_meteo);
         p = findViewById(R.id.txt_ville);
+
+
+
 
         /**
          * Fin Initialisation
@@ -196,19 +227,47 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         public void onClick(View v) {
             //new Piece(str,);
             try {
-                MediaStore.Images.Media.insertImage(getContentResolver(), String.valueOf(image),str+"_nord","description");
+                MediaStore.Images.Media.insertImage(getContentResolver(), String.valueOf(image),str+"","description");
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
             Toast.makeText(AjouterPiece.this, "Votre pièce a bien été enregister !", Toast.LENGTH_SHORT).show();
             piece = new Piece(str,Nord,Sud,Est,Ouest,met);
-            json = new Json();
             //json.saveData();
             intent = new Intent(AjouterPiece.this, SelectionPiece.class);
             bundle = new Bundle();
-            bundle.putString("piece", String.valueOf(piece.getImgNord()));
+
+            JSONObject obj = new JSONObject();
+            try {
+                File file = getFileStreamPath("data.json");
+                if(file.exists()) {
+                    Log.i("exist","oui");
+                    fosIn = openFileInput("data.json");
+                    InputStreamReader inputStreamReader = new InputStreamReader(fosIn);
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String nbLigne;
+                    while ((nbLigne = bufferedReader.readLine())!=null){
+                        stringBuilder.append(nbLigne);
+                    }
+                    obj = new JSONObject(stringBuilder.toString());
+                }
+                    obj.put("name2", str);
+                    obj.put("meteo2", met);
+                    fosJson = openFileOutput("data.json", MODE_PRIVATE);
+                    fosJson.write(obj.toString().getBytes(StandardCharsets.UTF_8));
+                    fosJson.flush();
+                    fosJson.close();
+
+            } catch (JSONException | IOException e) {
+                e.printStackTrace();
+            }
+
+            bundle.putString("piece", String.valueOf(piece.getNom()));
             bundle.putString("bat",b);
             intent.putExtras(bundle);
+            //listPiece.add(piece);
+            //batiment.setPieces(listPiece);
             startActivity(intent);
         }
     });
@@ -218,6 +277,33 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
     /**
      *
      */
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.direction, menu);
+        return true;
+    }
+
+    /**
+     *
+     * @param item
+     * @return
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public boolean onOptionsItemSelected(MenuItem item) {
+        ExecutorService service = Executors.newSingleThreadExecutor();
+        service.execute(new Runnable() {
+            @Override
+            public void run() {
+            }
+        });
+        if (item.getItemId() == R.id.btn_direct) {
+            intent = new Intent(AjouterPiece.this, getDirection.class);
+            startActivity(intent);
+        }
+        return false;
+    }
+
 
                 @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
@@ -297,11 +383,6 @@ public class AjouterPiece extends AppCompatActivity  implements LocationListener
         return new JSONObject(sb.toString());
     }
 
-
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        Toast.makeText(this, " La Longitude est : "+location.getLongitude() + " et la Lattitue est : " + location.getLatitude(), Toast.LENGTH_SHORT).show();
-    }
 
     /**
      * Sauvegarde les photos et l'affiche directement, renvoie le nom de la photo
